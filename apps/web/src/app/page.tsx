@@ -25,6 +25,8 @@ export default function Page() {
     }
   }, []);
 
+  const hasResults = snippets.length > 0 || !!answer;
+
   async function doSearch() {
     setLoading("search");
     setAnswer("");
@@ -56,6 +58,11 @@ export default function Page() {
     }
   }
 
+  function clearAll() {
+    setSnippets([]);
+    setAnswer("");
+  }
+
   return (
     <main className="space-y-10">
       {/* Header */}
@@ -84,7 +91,7 @@ export default function Page() {
         <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">
           Ask a question
         </label>
-        <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
+        <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
           <textarea
             rows={3}
             value={question}
@@ -108,6 +115,18 @@ export default function Page() {
           >
             {loading === "answer" ? <Dots /> : "Get Final Answer"}
           </Button>
+
+          {/* NEW: Clear Results button (shows after a search) */}
+          {hasResults && (
+            <Button
+              onClick={clearAll}
+              disabled={!!loading}
+              variant="secondary"
+              className="md:w-36"
+            >
+              Clear Results
+            </Button>
+          )}
         </div>
       </section>
 
@@ -153,7 +172,7 @@ export default function Page() {
 
       {/* Footer */}
       <footer className="pt-4 text-center text-xs text-slate-400">
-        Built with ❤️ using Next.js & Tailwind.
+        Shiwarne Silva
       </footer>
     </main>
   );
