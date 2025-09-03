@@ -1,27 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind v4 style import */
+@import "tailwindcss";
 
-/* Small helpers for cards & buttons used below */
-@layer components {
-  .card {
-    @apply rounded-2xl border border-white/10 bg-white/5 shadow-xl shadow-black/20 backdrop-blur;
-  }
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium ring-1 ring-white/10 transition
-           hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/30 active:translate-y-0;
-  }
-  .btn-primary {
-    @apply bg-indigo-600 text-white hover:bg-indigo-500;
-  }
-  .btn-soft {
-    @apply bg-white/10 text-slate-100 hover:bg-white/15;
-  }
-  .input {
-    @apply w-full rounded-xl border border-white/10 bg-white/5 p-3 text-slate-100 placeholder:text-slate-400 outline-none
-           focus:ring-2 focus:ring-indigo-500/50;
-  }
-  .badge {
-    @apply inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10;
-  }
-}
+/* Keep this file minimal. No @apply to avoid v4 plugin complaints. */
