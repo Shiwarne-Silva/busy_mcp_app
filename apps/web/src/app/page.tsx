@@ -2,138 +2,154 @@
 
 import { useState } from "react";
 
-type Snippet = {
-  text: string;
-  score?: number;
-};
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
 
-type AskResponse = {
-  snippets: Snippet[];
-};
+type Snippet = { text: string; score?: number };
 
-type Evidence = {
-  title?: string;
-  company?: string;
-  dates?: string;
-  idx?: number;
-};
-
-type AnswerResponse = {
-  answer: string;
-  evidence?: Evidence;
-};
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ||
-  "http://localhost:8080";
-
-export default function HomePage() {
-  const [question, setQuestion] = useState<string>("");
+export default function Home() {
+  const [q, setQ] = useState("What was my latest job title?");
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [answer, setAnswer] = useState<string>("");
-  const [loadingAsk, setLoadingAsk] = useState<boolean>(false);
-  const [loadingAnswer, setLoadingAnswer] = useState<boolean>(false);
+  const [loading, setLoading] = useState<"search" | "answer" | null>(null);
   const [error, setError] = useState<string>("");
 
-  async function handleAsk() {
+  async function search() {
     setError("");
     setAnswer("");
-    setLoadingAsk(true);
+    setLoading("search");
     try {
-      const res = await fetch(`${API_BASE}/ask`, {
+      const r = await fetch(`${API_BASE}/ask`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question: q }),
       });
-      const json: AskResponse = await res.json();
-      setSnippets(Array.isArray(json.snippets) ? json.snippets : []);
-    } catch (e) {
-      setError("Failed to fetch snippets.");
+      if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+      const data = await r.json();
+      setSnippets((data.snippets ?? []) as Snippet[]);
+    } catch (e: any) {
+      setError(e?.message || "Search failed");
     } finally {
-      setLoadingAsk(false);
+      setLoading(null);
     }
   }
 
-  async function handleAnswer() {
+  async function getAnswer() {
     setError("");
-    setLoadingAnswer(true);
+    setLoading("answer");
     try {
-      const res = await fetch(`${API_BASE}/answer`, {
+      const r = await fetch(`${API_BASE}/answer`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question: q }),
       });
-      const json: AnswerResponse = await res.json();
-      setAnswer(json.answer || "");
-    } catch (e) {
-      setError("Failed to fetch answer.");
+      if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+      const data = await r.json();
+      setAnswer(data.answer || JSON.stringify(data));
+      // optional: also show evidence
+      if (!snippets.length && data.evidence?.title) {
+        setSnippets([
+          {
+            text: `${data.evidence.title} — ${data.evidence.company} (${data.evidence.dates})`,
+          },
+        ]);
+      }
+    } catch (e: any) {
+      setError(e?.message || "Answer failed");
     } finally {
-      setLoadingAnswer(false);
+      setLoading(null);
     }
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
-      <div className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Busy MCP — Resume Q&amp;A
-        </h1>
+    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100">
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        <header className="mb-8">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Busy MCP — <span className="text-indigo-300">Resume Q&A</span>
+          </h1>
+          <p className="text-slate-400 mt-1 text-sm">
+            Ask questions about your resume. Results come from your Render
+            server.
+          </p>
+        </header>
 
-        <div className="mt-8 rounded-2xl border bg-white p-5 shadow-sm">
-          <label className="block text-sm font-medium">Ask a question</label>
+        <section className="bg-slate-900/40 backdrop-blur rounded-xl border border-white/10 p-4 md:p-5 shadow-lg">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Ask a question
+          </label>
           <textarea
-            className="mt-2 w-full rounded-xl border p-3 outline-none focus:ring"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
             rows={3}
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="What was my latest job title?"
+            className="w-full rounded-lg border border-white/10 bg-slate-900/70 outline-none focus:ring-2 focus:ring-indigo-400 p-3 text-slate-100 placeholder:text-slate-500"
+            placeholder="e.g., What was my latest job title?"
           />
-          <div className="mt-3 flex gap-2">
+
+          <div className="flex gap-3 mt-4">
             <button
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-white disabled:opacity-50"
-              onClick={handleAsk}
-              disabled={loadingAsk || !question.trim()}
+              onClick={search}
+              disabled={loading !== null}
+              className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 transition"
             >
-              {loadingAsk ? "Searching…" : "Search Snippets"}
+              {loading === "search" ? "Searching…" : "Search Snippets"}
             </button>
             <button
-              className="rounded-xl bg-emerald-600 px-4 py-2 text-white disabled:opacity-50"
-              onClick={handleAnswer}
-              disabled={loadingAnswer || !question.trim()}
+              onClick={getAnswer}
+              disabled={loading !== null}
+              className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 transition"
             >
-              {loadingAnswer ? "Answering…" : "Get Final Answer"}
+              {loading === "answer" ? "Getting…" : "Get Final Answer"}
             </button>
           </div>
 
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-        </div>
+          {error && (
+            <div className="mt-4 text-sm text-rose-300 bg-rose-950/40 border border-rose-700/40 rounded-lg p-3">
+              {error}
+            </div>
+          )}
+        </section>
 
-        {answer && (
-          <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">Answer</h2>
-            <p className="mt-2 leading-relaxed">{answer}</p>
-          </div>
-        )}
-
-        {snippets.length > 0 && (
-          <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">Evidence Snippets</h2>
-            <ul className="mt-3 space-y-3">
+        {!!snippets.length && (
+          <section className="mt-8">
+            <h2 className="text-lg font-medium mb-3 text-indigo-200">
+              Top snippets
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
               {snippets.map((s, i) => (
-                <li key={i} className="rounded-xl bg-indigo-50 p-3">
+                <article
+                  key={i}
+                  className="rounded-xl border border-white/10 bg-slate-900/40 p-4 shadow"
+                >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {s.text}
                   </p>
                   {typeof s.score === "number" && (
-                    <p className="mt-1 text-xs text-indigo-700">
-                      score: {s.score}
-                    </p>
+                    <div className="text-xs text-slate-400 mt-2">
+                      score: {s.score.toFixed(2)}
+                    </div>
                   )}
-                </li>
+                </article>
               ))}
-            </ul>
-          </div>
+            </div>
+          </section>
         )}
+
+        {answer && (
+          <section className="mt-8">
+            <h2 className="text-lg font-medium mb-3 text-emerald-200">
+              Final answer
+            </h2>
+            <div className="rounded-xl border border-white/10 bg-slate-900/40 p-4 shadow">
+              <p className="text-base leading-relaxed whitespace-pre-wrap">
+                {answer}
+              </p>
+            </div>
+          </section>
+        )}
+
+        <footer className="mt-10 text-xs text-slate-500">
+          API: <code className="text-slate-300">{API_BASE}</code>
+        </footer>
       </div>
     </main>
   );
