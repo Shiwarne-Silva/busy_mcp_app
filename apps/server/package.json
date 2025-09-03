@@ -1,7 +1,8 @@
 {
   "name": "busy-mcp-server",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
+  "main": "dist/index.js",
   "private": true,
   "scripts": {
     "dev": "tsx src/index.ts",
