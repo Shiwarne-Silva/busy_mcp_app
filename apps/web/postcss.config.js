@@ -1,6 +1,7 @@
+// Tailwind v4 expects this plugin name
 module.exports = {
   plugins: {
-    tailwindcss: {},
+    "@tailwindcss/postcss": {},
     autoprefixer: {},
   },
 };
