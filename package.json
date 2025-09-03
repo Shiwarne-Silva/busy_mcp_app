@@ -15,5 +15,8 @@
   "private": true,
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "dependencies": {
+    "tailwindcss": "^4.1.12"
+  }
 }
