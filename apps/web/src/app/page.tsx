@@ -13,6 +13,15 @@ export default function Home() {
   const [loading, setLoading] = useState<"search" | "answer" | null>(null);
   const [error, setError] = useState("");
 
+  function errorMsg(err: unknown) {
+    if (err instanceof Error) return err.message;
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return String(err);
+    }
+  }
+
   async function search() {
     setError("");
     setAnswer("");
@@ -24,10 +33,10 @@ export default function Home() {
         body: JSON.stringify({ question: q }),
       });
       if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-      const data = await r.json();
-      setSnippets((data.snippets ?? []) as Snippet[]);
-    } catch (e: any) {
-      setError(e?.message || "Search failed");
+      const data = (await r.json()) as { snippets?: Snippet[] };
+      setSnippets(data.snippets ?? []);
+    } catch (err) {
+      setError(errorMsg(err) || "Search failed");
     } finally {
       setLoading(null);
     }
@@ -43,14 +52,19 @@ export default function Home() {
         body: JSON.stringify({ question: q }),
       });
       if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-      const data = await r.json();
-      setAnswer(data.answer || JSON.stringify(data));
+      const data = (await r.json()) as {
+        answer?: string;
+        evidence?: { title?: string; company?: string; dates?: string };
+      };
+      setAnswer(data.answer ?? "");
       if (!snippets.length && data.evidence) {
         const e = data.evidence;
-        setSnippets([{ text: `${e.title} — ${e.company} (${e.dates})` }]);
+        setSnippets([
+          { text: `${e.title ?? ""} — ${e.company ?? ""} (${e.dates ?? ""})` },
+        ]);
       }
-    } catch (e: any) {
-      setError(e?.message || "Answer failed");
+    } catch (err) {
+      setError(errorMsg(err) || "Answer failed");
     } finally {
       setLoading(null);
     }
