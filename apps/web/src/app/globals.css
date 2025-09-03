@@ -245,3 +245,12 @@ ul {
     opacity: 1;
   }
 }
+html,
+body,
+:root {
+  height: 100%;
+}
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
