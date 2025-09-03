@@ -1,29 +1,19 @@
-# ---------- Build stage (with dev deps) ----------
+# ---------- Build ----------
 FROM node:20-alpine AS build
 WORKDIR /app
-
-# Install deps (uses server-level package.json/lock)
 COPY package*.json ./
-RUN npm ci
-
-# Copy source and build TS -> JS
+RUN npm install                # 👈 was: npm ci
 COPY tsconfig.json tsconfig.json
 COPY src src
-RUN npm run build  # produces dist/
+RUN npm run build              # -> dist/
 
-# ---------- Runtime stage (prod deps only) ----------
+# ---------- Runtime ----------
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-
-# Install only production deps
 COPY package*.json ./
-RUN npm ci --omit=dev
-
-# Copy built app and runtime assets
+RUN npm install --omit=dev     # 👈 was: npm ci --omit=dev
 COPY --from=build /app/dist dist
 COPY data data
-
-# Ports & start
 EXPOSE 8080
-CMD ["node", "dist/index.js"]
+CMD ["node","dist/index.js"]
