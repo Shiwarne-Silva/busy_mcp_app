@@ -98,5 +98,3 @@ apps/
   server/  # Express API: /health /ask /answer (/mcp-email-proxy)
   web/     # Next.js UI: calls server; clean, modern UI
 ```
-
-MIT
